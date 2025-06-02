@@ -7,6 +7,7 @@ import { FormInput, FormCheckbox, FormSelect } from '@/components/FormInput';
 import { useEffect, useState, ChangeEvent } from 'react';
 import Image from 'next/image';
 import { Open_Sans } from 'next/font/google';
+import { supabase } from '@/lib/supabaseClient';
 
 // Initialize Open Sans font
 const openSans = Open_Sans({
@@ -72,9 +73,87 @@ export default function Home() {
     setValue('exhibitFiles', updatedFiles, { shouldValidate: true });
   };
 
-  const onSubmit = (data: JobFormData) => {
-    console.log(data);
-    // Handle form submission, including data.exhibitFiles
+  console.log('Form errors:', errors);
+
+  const onSubmit = async (data: JobFormData) => {
+    console.log('Submitting form', data);
+    // Prepare data for Supabase
+    const {
+      testimonyTypes,
+      expenses,
+      exhibitFiles,
+      ...rest
+    } = data;
+
+    // Map camelCase to snake_case for Supabase
+    const mappedData = {
+      // Job Info
+      job_number: rest.jobNumber,
+      job_date: rest.jobDate,
+      scheduled_start_time: rest.scheduledStartTime,
+      actual_start_time: rest.actualStartTime,
+      is_remote_proceeding: rest.isRemoteProceeding,
+      end_time: rest.endTime,
+      report_wait_time: rest.reportWaitTime,
+      // Resource Info
+      reporter: rest.reporter,
+      reporter_email: rest.reporterEmail,
+      reporter_cell: rest.reporterCell,
+      videographer_quality: rest.videographerQuality,
+      // Case Info
+      court_number: rest.courtNumber,
+      county_district: rest.countyDistrict,
+      trial_date: rest.trialDate,
+      cause_number: rest.causeNumber,
+      style: rest.style,
+      // Witness Info
+      witness_name: rest.witnessName,
+      witness_email: rest.witnessEmail,
+      witness_type: rest.witnessType,
+      is_no_show: rest.isNoShow,
+      is_cna: rest.isCNA,
+      has_attorney: rest.hasAttorney,
+      is_attorney_present: rest.isAttorneyPresent,
+      requires_read_and_sign: rest.requiresReadAndSign,
+      witness_attorney_email: rest.witnessAttorneyEmail,
+      // Original Transcript Info
+      is_rush: rest.isRush,
+      due_date: rest.dueDate,
+      total_pages: rest.totalPages,
+      testimony_regular: testimonyTypes.regular,
+      testimony_technical: testimonyTypes.technical,
+      testimony_video: testimonyTypes.video,
+      testimony_interpreter: testimonyTypes.interpreter,
+      testimony_realtime: testimonyTypes.realtime,
+      testimony_rough_draft: testimonyTypes.roughDraft,
+      testimony_recording_transcription: testimonyTypes.recordingTranscription,
+      transcription_listening_hours: rest.transcriptionListeningHours,
+      // Original Exhibits Info
+      exhibits_marked: rest.exhibitsMarked,
+      exhibits_through: rest.exhibitsThrough,
+      total_exhibits: rest.totalExhibits,
+      received_via: rest.receivedVia,
+      attach_to_transcript: rest.attachToTranscript,
+      return_to: rest.returnTo,
+      // Expense Reimbursement
+      expense_parking: expenses.parking,
+      expense_travel: expenses.travel,
+      expense_mileage: expenses.mileage,
+      expense_shipping: expenses.shipping,
+      expense_other: expenses.other,
+      // Exhibit Upload
+      exhibit_file_names: Array.isArray(exhibitFiles) ? exhibitFiles.map(f => (f as File).name) : [],
+      exhibit_file_urls: Array.isArray(exhibitFiles) ? exhibitFiles.map(f => '') : [], // Placeholder for now
+      // Other Instructions
+      special_instructions: rest.specialInstructions,
+    };
+
+    const { error } = await supabase.from('job_sheet').insert([mappedData]);
+    if (error) {
+      alert('Error submitting job sheet: ' + error.message);
+    } else {
+      alert('Job sheet submitted successfully!');
+    }
   };
 
   if (!isClient) {
@@ -131,6 +210,14 @@ export default function Home() {
                 type="time"
                 register={register}
                 error={errors.actualStartTime?.message}
+              />
+              <FormInput<JobFormData>
+                label="End Time"
+                name="endTime"
+                type="time"
+                required
+                register={register}
+                error={errors.endTime?.message}
               />
             </div>
             <div className="form-row">
