@@ -1,26 +1,90 @@
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  @apply bg-[#f0f0f0];
+}
+
+@layer components {
+  .form-section {
+    @apply bg-white rounded-lg p-6 mb-6 shadow-sm;
+}
+
+  .form-section-title {
+    @apply text-xl font-medium mb-4 text-gray-800;
+  }
+
+  .form-row {
+    @apply flex flex-wrap gap-4 mb-4;
+  }
+
+  .form-group {
+    @apply flex-1 min-w-[250px];
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+
+  .form-input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C4122F] focus:border-transparent;
+  }
+
+  .form-select {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C4122F] focus:border-transparent;
+  }
+
+  .form-checkbox-group {
+    @apply space-y-2;
+  }
+
+  .form-checkbox-label {
+    @apply flex items-center space-x-2 text-sm text-gray-700;
+  }
+
+  .form-checkbox {
+    @apply h-4 w-4 border-gray-300 rounded;
+  }
+
+  .form-checkbox:checked {
+    @apply bg-[#C4122F] border-[#C4122F];
+  }
+
+  .form-checkbox:focus {
+    @apply ring-2 ring-[#C4122F] ring-offset-2;
+  }
+
+  .form-error {
+    @apply text-[#C4122F] text-sm mt-1;
+}
+}
+
+/* Custom styles to match SunExpress design */
+.progress-bar {
+  @apply flex items-center justify-between mb-8 px-4;
+}
+
+.progress-step {
+  @apply flex flex-col items-center;
+}
+
+.step-icon {
+  @apply w-8 h-8 rounded-full flex items-center justify-center text-sm border border-gray-300;
+  }
+
+.step-text {
+  @apply text-sm text-gray-600 mt-2;
+}
+
+.step-active {
+  @apply bg-primary text-white border-primary;
+}
+
+.primary-button {
+  @apply bg-[#C4122F] text-white px-6 py-2 rounded-md hover:bg-[#A30F27] transition-colors;
+}
+
+.secondary-button {
+  @apply border border-[#C4122F] text-[#C4122F] px-6 py-2 rounded-md hover:bg-red-50 transition-colors;
 }
