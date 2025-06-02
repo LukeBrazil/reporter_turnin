@@ -1,10 +1,10 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { JobFormData, jobFormSchema } from '@/lib/schema';
 import { FormInput, FormCheckbox, FormSelect } from '@/components/FormInput';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ChangeEvent } from 'react';
 import Image from 'next/image';
 import { Open_Sans } from 'next/font/google';
 
@@ -16,6 +16,7 @@ const openSans = Open_Sans({
 
 export default function Home() {
   const [isClient, setIsClient] = useState(false);
+  const [selectedExhibits, setSelectedExhibits] = useState<File[]>([]);
 
   useEffect(() => {
     setIsClient(true);
@@ -25,6 +26,8 @@ export default function Home() {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
+    watch,
   } = useForm<JobFormData>({
     resolver: zodResolver(jobFormSchema),
     defaultValues: {
@@ -44,12 +47,34 @@ export default function Home() {
         shipping: '',
         other: '',
       },
+      exhibitFiles: [],
     },
   });
 
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const newFiles = Array.from(event.target.files);
+      const pdfFiles = newFiles.filter(file => file.type === 'application/pdf');
+      
+      const combinedFiles = [...selectedExhibits, ...pdfFiles];
+      const limitedFiles = combinedFiles.slice(0, 50);
+
+      setSelectedExhibits(limitedFiles);
+      setValue('exhibitFiles', limitedFiles, { shouldValidate: true });
+      
+      event.target.value = ''; 
+    }
+  };
+
+  const handleRemoveFile = (fileName: string) => {
+    const updatedFiles = selectedExhibits.filter(file => file.name !== fileName);
+    setSelectedExhibits(updatedFiles);
+    setValue('exhibitFiles', updatedFiles, { shouldValidate: true });
+  };
+
   const onSubmit = (data: JobFormData) => {
     console.log(data);
-    // Handle form submission
+    // Handle form submission, including data.exhibitFiles
   };
 
   if (!isClient) {
@@ -68,7 +93,7 @@ export default function Home() {
             priority
           />
         </div>
-        <h1 className={`text-2xl font-bold text-gray-800 mb-6 text-center ${openSans.className}`}>Court Reporter Job Sheet</h1>
+        <h1 className={`text-2xl font-bold text-gray-800 mb-6 text-center ${openSans.className}`}>COURT REPORTER JOB SHEET</h1>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Job Info Section */}
@@ -100,6 +125,15 @@ export default function Home() {
                 register={register}
                 error={errors.scheduledStartTime?.message}
               />
+              <FormInput<JobFormData>
+                label="Actual Start Time"
+                name="actualStartTime"
+                type="time"
+                register={register}
+                error={errors.actualStartTime?.message}
+              />
+            </div>
+            <div className="form-row">
               <FormCheckbox<JobFormData>
                 label="Remote Proceeding (Zoom)"
                 name="isRemoteProceeding"
@@ -161,7 +195,6 @@ export default function Home() {
                 label="Trial Date"
                 name="trialDate"
                 type="date"
-                required
                 register={register}
                 error={errors.trialDate?.message}
               />
@@ -417,6 +450,46 @@ export default function Home() {
             </div>
           </section>
 
+          {/* Exhibit Upload Section */}
+          <section className="form-section">
+            <h2 className="form-section-title">Exhibit Upload</h2>
+            <div className="form-group">
+              <label htmlFor="exhibitFilesInput" className="form-label">
+                Upload Exhibits (PDF only, up to 50 files)
+              </label>
+              <input
+                type="file"
+                id="exhibitFilesInput"
+                multiple
+                accept=".pdf"
+                className="form-input file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-[#A30F27] mb-2"
+                onChange={handleFileChange}
+              />
+              {selectedExhibits.length > 0 && (
+                <div className="mt-2 space-y-2">
+                  <p className="text-sm font-medium text-gray-700">Selected files:</p>
+                  <ul className="list-disc list-inside pl-2 space-y-1">
+                    {selectedExhibits.map(file => (
+                      <li key={file.name} className="text-sm text-gray-600 flex justify-between items-center">
+                        <span>{file.name} ({Math.round(file.size / 1024)} KB)</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile(file.name)}
+                          className="ml-2 text-xs text-red-500 hover:text-red-700 font-semibold"
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {errors.exhibitFiles && (
+                <p className="form-error">{errors.exhibitFiles.message?.toString() || 'Invalid file(s)'}</p>
+              )}
+            </div>
+          </section>
+
           {/* Special Instructions Section */}
           <section className="form-section">
             <h2 className="form-section-title">Special Instructions</h2>
@@ -431,9 +504,6 @@ export default function Home() {
 
           {/* Submit Buttons */}
           <div className="flex justify-end space-x-4">
-            <button type="button" className="secondary-button">
-              Save Draft
-            </button>
             <button type="submit" className="primary-button">
               Submit
             </button>

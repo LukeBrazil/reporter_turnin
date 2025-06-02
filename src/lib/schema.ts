@@ -5,8 +5,8 @@ export const jobFormSchema = z.object({
   jobNumber: z.string().min(1, 'Job number is required'),
   jobDate: z.string().min(1, 'Job date is required'),
   scheduledStartTime: z.string().min(1, 'Scheduled start time is required'),
+  actualStartTime: z.string().optional(),
   isRemoteProceeding: z.boolean(),
-  actualStartTime: z.string().min(1, 'Actual start time is required'),
   endTime: z.string().min(1, 'End time is required'),
   reportWaitTime: z.string().optional(),
 
@@ -19,7 +19,7 @@ export const jobFormSchema = z.object({
   // Case Info
   courtNumber: z.string().min(1, 'Court number is required'),
   countyDistrict: z.string().min(1, 'County/District is required'),
-  trialDate: z.string().min(1, 'Trial date is required'),
+  trialDate: z.string().optional(),
   causeNumber: z.string().min(1, 'Cause number is required'),
   style: z.string().min(1, 'Style is required'),
 
@@ -65,6 +65,9 @@ export const jobFormSchema = z.object({
     shipping: z.string().optional(),
     other: z.string().optional(),
   }),
+
+  // Exhibit Upload
+  exhibitFiles: z.array(z.instanceof(typeof window !== 'undefined' ? File : Object)).optional(),
 
   // Other Instructions
   specialInstructions: z.string().optional(),
