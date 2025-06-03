@@ -4,11 +4,12 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { JobFormData, jobFormSchema } from '@/lib/schema';
 import { FormInput, FormCheckbox, FormSelect } from '@/components/FormInput';
-import { useEffect, useState, ChangeEvent, useMemo } from 'react';
+import { useEffect, useState, ChangeEvent, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { Open_Sans } from 'next/font/google';
 import { supabase } from '@/lib/supabaseClient';
 import { useDropzone } from 'react-dropzone';
+import Confetti from 'react-confetti';
 
 // Initialize Open Sans font
 const openSans = Open_Sans({
@@ -19,6 +20,8 @@ const openSans = Open_Sans({
 export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const [selectedExhibits, setSelectedExhibits] = useState<File[]>([]);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -33,6 +36,9 @@ export default function Home() {
   } = useForm<JobFormData>({
     resolver: zodResolver(jobFormSchema),
     defaultValues: {
+      scheduledStartTime: '09:00',
+      actualStartTime: '09:00',
+      endTime: '09:00',
       testimonyTypes: {
         regular: false,
         technical: false,
@@ -76,8 +82,53 @@ export default function Home() {
 
   console.log('Form errors:', errors);
 
+  // Trap focus in modal and close on Escape
+  useEffect(() => {
+    if (!showSuccessModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleCloseModal();
+      }
+      // Trap focus
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        } else if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    // Focus the close button on open
+    setTimeout(() => {
+      modalRef.current?.querySelector('button')?.focus();
+    }, 0);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showSuccessModal]);
+
+  const handleCloseModal = () => {
+    setShowSuccessModal(false);
+    window.location.reload();
+  };
+
   const onSubmit = async (data: JobFormData) => {
     console.log('Submitting form', data);
+    // Fetch user's IP address
+    let ip_address = null;
+    try {
+      const res = await fetch('/api/ip');
+      const json = await res.json();
+      ip_address = json.ip || null;
+    } catch (e) {
+      console.warn('Could not fetch IP address', e);
+    }
     // Prepare data for Supabase
     const {
       testimonyTypes,
@@ -147,13 +198,15 @@ export default function Home() {
       exhibit_file_urls: Array.isArray(exhibitFiles) ? exhibitFiles.map(f => '') : [], // Placeholder for now
       // Other Instructions
       special_instructions: rest.specialInstructions,
+      // IP Address
+      ip_address,
     };
 
     const { error } = await supabase.from('job_sheet').insert([mappedData]);
     if (error) {
       alert('Error submitting job sheet: ' + error.message);
     } else {
-      alert('Job sheet submitted successfully!');
+      setShowSuccessModal(true);
     }
   };
 
@@ -188,6 +241,69 @@ export default function Home() {
       isPDF,
     };
   }), [selectedExhibits]);
+
+  // Dummy data for testing
+  const dummyData: Partial<JobFormData> = {
+    jobNumber: 'JOB-12345',
+    jobDate: '2024-07-01',
+    scheduledStartTime: '09:00',
+    actualStartTime: '09:15',
+    isRemoteProceeding: true,
+    endTime: '11:30',
+    reportWaitTime: '10',
+    reporter: 'Jane Doe',
+    reporterEmail: 'jane.doe@example.com',
+    reporterCell: '555-123-4567',
+    videographerQuality: true,
+    courtNumber: 'C-2024-001',
+    countyDistrict: 'Travis',
+    trialDate: '2024-07-10',
+    causeNumber: 'A123456',
+    style: 'State vs. Smith',
+    witnessName: 'John Smith',
+    witnessEmail: 'john.smith@example.com',
+    witnessType: 'Expert',
+    isNoShow: false,
+    isCNA: false,
+    hasAttorney: true,
+    isAttorneyPresent: true,
+    requiresReadAndSign: false,
+    witnessAttorneyEmail: 'attorney@example.com',
+    isRush: false,
+    dueDate: '2024-07-05',
+    totalPages: '120',
+    testimonyTypes: {
+      regular: true,
+      technical: false,
+      video: true,
+      interpreter: false,
+      realtime: false,
+      roughDraft: false,
+      recordingTranscription: false,
+    },
+    transcriptionListeningHours: '2',
+    exhibitsMarked: '1',
+    exhibitsThrough: '5',
+    totalExhibits: '5',
+    receivedVia: 'Electronic',
+    attachToTranscript: true,
+    returnTo: 'Clerk',
+    expenses: {
+      parking: '10',
+      travel: '20',
+      mileage: '15',
+      shipping: '5',
+      other: '0',
+    },
+    specialInstructions: 'N/A',
+  };
+
+  // Handler to fill form with dummy data
+  const handleTestInterface = () => {
+    Object.entries(dummyData).forEach(([key, value]) => {
+      setValue(key as keyof JobFormData, value as any, { shouldValidate: true });
+    });
+  };
 
   if (!isClient) {
     return null; // or a loading spinner
@@ -633,13 +749,48 @@ export default function Home() {
           </section>
 
           {/* Submit Buttons */}
-          <div className="flex justify-end space-x-4">
+          <div className="flex justify-center space-x-4 mt-8">
             <button type="submit" className="primary-button">
               Submit
             </button>
+            {process.env.NODE_ENV !== 'production' && (
+              <button
+                type="button"
+                className="px-6 py-2 rounded bg-gray-400 text-white font-semibold hover:bg-gray-500 transition-colors"
+                onClick={handleTestInterface}
+              >
+                test-interface
+              </button>
+            )}
           </div>
         </form>
-    </div>
+      </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 animate-fade-in">
+          <Confetti width={window.innerWidth} height={window.innerHeight} numberOfPieces={200} recycle={false} />
+          <div
+            ref={modalRef}
+            className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center relative animate-fade-in"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
+          >
+            <div className="flex justify-center mb-4">
+              <svg className="w-12 h-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="#22c55e" /><path stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M8 12l2 2 4-4" /></svg>
+            </div>
+            <h2 id="modal-title" className="text-2xl font-bold text-green-600 mb-2">Submission Complete</h2>
+            <p className="mb-6">Your job sheet was submitted successfully.</p>
+            <button
+              className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded font-semibold focus:outline-none focus:ring-2 focus:ring-green-400"
+              onClick={handleCloseModal}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
