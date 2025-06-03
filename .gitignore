@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Ignore Cursor-specific configuration that might contain sensitive info
 .cursor/mcp.json
+
+# Local env files
+.env.local
