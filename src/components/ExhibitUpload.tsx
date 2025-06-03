@@ -44,7 +44,7 @@ const ExhibitUpload: React.FC<ExhibitUploadProps> = ({ selectedExhibits, setSele
 
   return (
     <section className="form-section">
-      <h2 className="form-section-title">Exhibit Upload</h2>
+      <h2 className="form-section-title">Exhibit & File Upload</h2>
       <div className="form-group">
         <div className="flex items-center justify-center w-full">
           <div {...getRootProps()} className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-[#f0f0f0] dark:bg-[#f0f0f0] hover:bg-gray-100 dark:hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 transition-colors">

@@ -208,6 +208,16 @@ export default function Home() {
     if (error) {
       alert('Error submitting job sheet: ' + error.message);
     } else {
+      // Send data to n8n webhook
+      try {
+        await fetch('https://lukesandbox.app.n8n.cloud/webhook-test/job-sheet', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(mappedData),
+        });
+      } catch (e) {
+        console.warn('Failed to send data to n8n webhook', e);
+      }
       setShowSuccessModal(true);
     }
   };
@@ -690,7 +700,7 @@ export default function Home() {
 
           {/* Exhibit Upload Section */}
           <section className="form-section">
-            <h2 className="form-section-title">Exhibit Upload</h2>
+           
             <ExhibitUpload
               selectedExhibits={selectedExhibits}
               setSelectedExhibits={setSelectedExhibits}
