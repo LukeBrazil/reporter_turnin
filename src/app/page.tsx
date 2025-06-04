@@ -363,9 +363,9 @@ export default function Home() {
           <Image src="/BRAZIL_Logo.webp" alt="BrazilCo Logo" width={160} height={40} priority className="h-10 w-auto" />
         </div>
         <nav className="flex gap-8">
-          <a href="#" className="text-black font-semibold hover:text-primary transition">Services</a>
-          <a href="#" className="text-black font-semibold hover:text-primary transition">About</a>
-          <a href="#" className="text-black font-semibold hover:text-primary transition">Contact</a>
+          <a href="https://brazilco.com/services/court-reporting/" className="text-black font-semibold hover:text-primary transition" target="_blank" rel="noopener noreferrer">Services</a>
+          <a href="https://brazilco.com/about/" className="text-black font-semibold hover:text-primary transition" target="_blank" rel="noopener noreferrer">About</a>
+          <a href="https://brazilco.com/contact/" className="text-black font-semibold hover:text-primary transition" target="_blank" rel="noopener noreferrer">Contact</a>
         </nav>
       </header>
       <div className="max-w-4xl mx-auto p-8 bg-white rounded-xl shadow">
