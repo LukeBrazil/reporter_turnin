@@ -9,7 +9,6 @@ import Image from 'next/image';
 import { Open_Sans } from 'next/font/google';
 import { supabase } from '@/lib/supabaseClient';
 import { useDropzone } from 'react-dropzone';
-import Confetti from 'react-confetti';
 import SuccessModal from '@/components/SuccessModal';
 import ExhibitUpload from '@/components/ExhibitUpload';
 
@@ -24,6 +23,7 @@ export default function Home() {
   const [selectedExhibits, setSelectedExhibits] = useState<File[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -121,104 +121,138 @@ export default function Home() {
   };
 
   const onSubmit = async (data: JobFormData) => {
-    console.log('Submitting form', data);
-    // Fetch user's IP address
-    let ip_address = null;
+    setIsSubmitting(true);
     try {
-      const res = await fetch('/api/ip');
-      const json = await res.json();
-      ip_address = json.ip || null;
-    } catch (e) {
-      console.warn('Could not fetch IP address', e);
-    }
-    // Prepare data for Supabase
-    const {
-      testimonyTypes,
-      expenses,
-      exhibitFiles,
-      ...rest
-    } = data;
-
-    // Map camelCase to snake_case for Supabase
-    const mappedData = {
-      // Job Info
-      job_number: rest.jobNumber,
-      job_date: rest.jobDate,
-      scheduled_start_time: rest.scheduledStartTime,
-      actual_start_time: rest.actualStartTime,
-      is_remote_proceeding: rest.isRemoteProceeding,
-      end_time: rest.endTime,
-      report_wait_time: rest.reportWaitTime,
-      // Resource Info
-      reporter: rest.reporter,
-      reporter_email: rest.reporterEmail,
-      reporter_cell: rest.reporterCell,
-      videographer_quality: rest.videographerQuality,
-      // Case Info
-      court_number: rest.courtNumber,
-      county_district: rest.countyDistrict,
-      trial_date: rest.trialDate,
-      cause_number: rest.causeNumber,
-      style: rest.style,
-      // Witness Info
-      witness_name: rest.witnessName,
-      witness_email: rest.witnessEmail,
-      witness_type: rest.witnessType,
-      is_no_show: rest.isNoShow,
-      is_cna: rest.isCNA,
-      has_attorney: rest.hasAttorney,
-      is_attorney_present: rest.isAttorneyPresent,
-      requires_read_and_sign: rest.requiresReadAndSign,
-      witness_attorney_email: rest.witnessAttorneyEmail,
-      // Original Transcript Info
-      is_rush: rest.isRush,
-      due_date: rest.dueDate,
-      total_pages: rest.totalPages,
-      testimony_regular: testimonyTypes.regular,
-      testimony_technical: testimonyTypes.technical,
-      testimony_video: testimonyTypes.video,
-      testimony_interpreter: testimonyTypes.interpreter,
-      testimony_realtime: testimonyTypes.realtime,
-      testimony_rough_draft: testimonyTypes.roughDraft,
-      testimony_recording_transcription: testimonyTypes.recordingTranscription,
-      transcription_listening_hours: rest.transcriptionListeningHours,
-      // Original Exhibits Info
-      exhibits_marked: rest.exhibitsMarked,
-      exhibits_through: rest.exhibitsThrough,
-      total_exhibits: rest.totalExhibits,
-      received_via: rest.receivedVia,
-      attach_to_transcript: rest.attachToTranscript,
-      return_to: rest.returnTo,
-      // Expense Reimbursement
-      expense_parking: expenses.parking,
-      expense_travel: expenses.travel,
-      expense_mileage: expenses.mileage,
-      expense_shipping: expenses.shipping,
-      expense_other: expenses.other,
-      // Exhibit Upload
-      exhibit_file_names: Array.isArray(exhibitFiles) ? exhibitFiles.map(f => (f as File).name) : [],
-      exhibit_file_urls: Array.isArray(exhibitFiles) ? exhibitFiles.map(f => '') : [], // Placeholder for now
-      // Other Instructions
-      special_instructions: rest.specialInstructions,
-      // IP Address
-      ip_address,
-    };
-
-    const { error } = await supabase.from('job_sheet').insert([mappedData]);
-    if (error) {
-      alert('Error submitting job sheet: ' + error.message);
-    } else {
-      // Send data to n8n webhook
+      console.log('Submitting form', data);
+      // Fetch user's IP address
+      let ip_address = null;
       try {
-        await fetch('https://lukesandbox.app.n8n.cloud/webhook-test/job-sheet', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(mappedData),
-        });
+        const res = await fetch('/api/ip');
+        const json = await res.json();
+        ip_address = json.ip || null;
       } catch (e) {
-        console.warn('Failed to send data to n8n webhook', e);
+        console.warn('Could not fetch IP address', e);
       }
-      setShowSuccessModal(true);
+      // Prepare data for Supabase
+      const {
+        testimonyTypes,
+        expenses,
+        exhibitFiles,
+        ...rest
+      } = data;
+
+      // --- Upload exhibit files to Supabase Storage ---
+      let exhibit_file_urls: string[] = [];
+      let exhibit_file_names: string[] = [];
+      if (Array.isArray(exhibitFiles) && exhibitFiles.length > 0) {
+        for (const file of exhibitFiles) {
+          // Type guard: only process if file is a File
+          if (!(file instanceof File)) continue;
+          const filePath = `${Date.now()}_${file.name}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('exhibit-uploads')
+            .upload(filePath, file, { upsert: false });
+          if (uploadError) {
+            alert(`Error uploading file ${file.name}: ${uploadError.message}`);
+            return;
+          }
+          // Get public URL
+          const { data: publicUrlData } = supabase.storage
+            .from('exhibit-uploads')
+            .getPublicUrl(filePath);
+          if (publicUrlData?.publicUrl) {
+            exhibit_file_urls.push(publicUrlData.publicUrl);
+            exhibit_file_names.push(file.name);
+          }
+        }
+      }
+
+      // Map camelCase to snake_case for Supabase
+      const mappedData = {
+        // Job Info
+        job_number: rest.jobNumber,
+        job_date: rest.jobDate,
+        scheduled_start_time: rest.scheduledStartTime,
+        actual_start_time: rest.actualStartTime,
+        is_remote_proceeding: rest.isRemoteProceeding,
+        end_time: rest.endTime,
+        report_wait_time: rest.reportWaitTime,
+        // Resource Info
+        reporter: rest.reporter,
+        reporter_email: rest.reporterEmail,
+        reporter_cell: rest.reporterCell,
+        videographer_quality: rest.videographerQuality,
+        // Case Info
+        court_number: rest.courtNumber,
+        county_district: rest.countyDistrict,
+        trial_date: rest.trialDate,
+        cause_number: rest.causeNumber,
+        style: rest.style,
+        // Witness Info
+        witness_name: rest.witnessName,
+        witness_email: rest.witnessEmail,
+        witness_type: rest.witnessType,
+        is_no_show: rest.isNoShow,
+        is_cna: rest.isCNA,
+        has_attorney: rest.hasAttorney,
+        is_attorney_present: rest.isAttorneyPresent,
+        requires_read_and_sign: rest.requiresReadAndSign,
+        witness_attorney_email: rest.witnessAttorneyEmail,
+        // Original Transcript Info
+        is_rush: rest.isRush,
+        due_date: rest.dueDate,
+        total_pages: rest.totalPages,
+        testimony_regular: testimonyTypes.regular,
+        testimony_technical: testimonyTypes.technical,
+        testimony_video: testimonyTypes.video,
+        testimony_interpreter: testimonyTypes.interpreter,
+        testimony_realtime: testimonyTypes.realtime,
+        testimony_rough_draft: testimonyTypes.roughDraft,
+        testimony_recording_transcription: testimonyTypes.recordingTranscription,
+        transcription_listening_hours: rest.transcriptionListeningHours,
+        // Original Exhibits Info
+        exhibits_marked: rest.exhibitsMarked,
+        exhibits_through: rest.exhibitsThrough,
+        total_exhibits: rest.totalExhibits,
+        received_via: rest.receivedVia,
+        attach_to_transcript: rest.attachToTranscript,
+        return_to: rest.returnTo,
+        // Expense Reimbursement
+        expense_parking: expenses.parking,
+        expense_travel: expenses.travel,
+        expense_mileage: expenses.mileage,
+        expense_shipping: expenses.shipping,
+        expense_other: expenses.other,
+        // Exhibit Upload
+        exhibit_file_names,
+        exhibit_file_urls,
+        // Other Instructions
+        special_instructions: rest.specialInstructions,
+        // IP Address
+        ip_address,
+      };
+
+      const { error } = await supabase.from('job_sheet').insert([mappedData]);
+      if (error) {
+        alert('Error submitting job sheet: ' + error.message);
+        setIsSubmitting(false);
+      } else {
+        // Send data to n8n webhook
+        try {
+          await fetch('https://lukesandbox.app.n8n.cloud/webhook-test/job-sheet', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(mappedData),
+          });
+        } catch (e) {
+          console.warn('Failed to send data to n8n webhook', e);
+        }
+        setShowSuccessModal(true);
+        setIsSubmitting(false);
+      }
+    } catch (e) {
+      setIsSubmitting(false);
+      throw e;
     }
   };
 
@@ -331,6 +365,7 @@ export default function Home() {
             width={300}
             height={75}
             priority
+            style={{ height: 'auto' }}
           />
         </div>
         <h1 className={`text-2xl font-bold text-gray-800 mb-6 text-center ${openSans.className}`}>COURT REPORTER JOB SHEET</h1>
@@ -724,8 +759,22 @@ export default function Home() {
 
           {/* Submit Buttons */}
           <div className="flex justify-center space-x-4 mt-8">
-            <button type="submit" className="primary-button">
+            <button
+              type="submit"
+              className="primary-button flex items-center justify-center"
+              disabled={isSubmitting}
+              aria-busy={isSubmitting}
+              aria-live="polite"
+            >
               Submit
+              {isSubmitting && (
+                <span className="ml-2" role="status" aria-live="polite">
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                  </svg>
+                </span>
+              )}
             </button>
             {process.env.NODE_ENV !== 'production' && (
               <button
