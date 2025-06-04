@@ -8,7 +8,16 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#C4122F',
+        primary: '#C8102E',
+        black: '#000000',
+        gray: {
+          100: '#f5f5f5',
+          900: '#1a1a1a',
+        },
+        accent: '#FFD700',
+      },
+      fontFamily: {
+        sans: ['Open Sans', 'Lato', 'sans-serif'],
       },
     },
   },
