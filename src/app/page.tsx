@@ -356,20 +356,20 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f0f0f0] p-4 md:p-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex justify-center mb-8">
-          <Image
-            src="/BRAZIL_Logo.webp"
-            alt="Brazil Co Litigation Services Logo"
-            width={300}
-            height={75}
-            priority
-            style={{ height: 'auto' }}
-          />
+    <main className="min-h-screen bg-gray-100 font-sans">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-100 flex items-center justify-between px-8 py-4 mb-8 shadow-sm">
+        <div className="flex items-center gap-4">
+          <Image src="/BRAZIL_Logo.webp" alt="BrazilCo Logo" width={160} height={40} priority className="h-10 w-auto" />
         </div>
-        <h1 className={`text-2xl font-bold text-gray-800 mb-6 text-center ${openSans.className}`}>COURT REPORTER JOB SHEET</h1>
-        
+        <nav className="flex gap-8">
+          <a href="#" className="text-black font-semibold hover:text-primary transition">Services</a>
+          <a href="#" className="text-black font-semibold hover:text-primary transition">About</a>
+          <a href="#" className="text-black font-semibold hover:text-primary transition">Contact</a>
+        </nav>
+      </header>
+      <div className="max-w-4xl mx-auto p-8 bg-white rounded-xl shadow">
+        <h1 className={`text-3xl font-bold text-black mb-6 text-center tracking-wide ${openSans.className}`}>COURT REPORTER JOB SHEET</h1>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Job Info Section */}
           <section className="form-section">
@@ -761,7 +761,7 @@ export default function Home() {
           <div className="flex justify-center space-x-4 mt-8">
             <button
               type="submit"
-              className="primary-button flex items-center justify-center"
+              className="bg-primary text-white font-bold rounded-lg px-6 py-3 shadow flex items-center justify-center hover:bg-primary/90 transition disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={isSubmitting}
               aria-busy={isSubmitting}
               aria-live="polite"
