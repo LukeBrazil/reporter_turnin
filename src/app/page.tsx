@@ -22,6 +22,7 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const [selectedExhibits, setSelectedExhibits] = useState<File[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isNavOpen, setIsNavOpen] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -358,15 +359,37 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gray-100 font-sans">
       {/* Header */}
-      <header className="bg-white border-b border-gray-100 flex items-center justify-between px-8 py-4 mb-8 shadow-sm">
-        <div className="flex items-center gap-4">
-          <Image src="/BRAZIL_Logo.webp" alt="BrazilCo Logo" width={160} height={40} priority className="h-10 w-auto" />
+      <header className="bg-white border-b border-gray-100 shadow-sm px-4 py-4 mb-8">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <a href="https://brazilco.com/" target="_blank" rel="noopener noreferrer" aria-label="BrazilCo Home">
+            <Image src="/BRAZIL_Logo.webp" alt="BrazilCo Logo" width={160} height={40} priority className="h-10 w-auto" />
+          </a>
+          {/* Hamburger button for mobile */}
+          <button
+            className="md:hidden ml-2 p-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+            aria-label="Open navigation menu"
+            aria-expanded={isNavOpen}
+            onClick={() => setIsNavOpen((open) => !open)}
+          >
+            <svg className="h-7 w-7 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          {/* Desktop nav */}
+          <nav className="hidden md:flex gap-8">
+            <a href="https://brazilco.com/services/court-reporting/" className="text-black font-semibold hover:text-primary transition" target="_blank" rel="noopener noreferrer">Services</a>
+            <a href="https://brazilco.com/about/" className="text-black font-semibold hover:text-primary transition" target="_blank" rel="noopener noreferrer">About</a>
+            <a href="https://brazilco.com/contact/" className="text-black font-semibold hover:text-primary transition" target="_blank" rel="noopener noreferrer">Contact</a>
+          </nav>
         </div>
-        <nav className="flex gap-8">
-          <a href="https://brazilco.com/services/court-reporting/" className="text-black font-semibold hover:text-primary transition" target="_blank" rel="noopener noreferrer">Services</a>
-          <a href="https://brazilco.com/about/" className="text-black font-semibold hover:text-primary transition" target="_blank" rel="noopener noreferrer">About</a>
-          <a href="https://brazilco.com/contact/" className="text-black font-semibold hover:text-primary transition" target="_blank" rel="noopener noreferrer">Contact</a>
-        </nav>
+        {/* Mobile nav menu */}
+        {isNavOpen && (
+          <nav className="md:hidden mt-2 animate-fade-in flex flex-col items-center bg-white rounded shadow-lg py-4 z-50">
+            <a href="https://brazilco.com/services/court-reporting/" className="block w-full text-center py-2 text-black font-semibold hover:text-primary transition" target="_blank" rel="noopener noreferrer" onClick={() => setIsNavOpen(false)}>Services</a>
+            <a href="https://brazilco.com/about/" className="block w-full text-center py-2 text-black font-semibold hover:text-primary transition" target="_blank" rel="noopener noreferrer" onClick={() => setIsNavOpen(false)}>About</a>
+            <a href="https://brazilco.com/contact/" className="block w-full text-center py-2 text-black font-semibold hover:text-primary transition" target="_blank" rel="noopener noreferrer" onClick={() => setIsNavOpen(false)}>Contact</a>
+          </nav>
+        )}
       </header>
       <div className="max-w-4xl mx-auto p-8 bg-white rounded-xl shadow">
         <h1 className={`text-3xl font-bold text-black mb-6 text-center tracking-wide ${openSans.className}`}>COURT REPORTER JOB SHEET</h1>
