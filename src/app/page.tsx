@@ -139,7 +139,14 @@ export default function Home() {
             .from('exhibit-uploads')
             .getPublicUrl(filePath);
           if (publicUrlData?.publicUrl) {
-            exhibit_file_urls.push(publicUrlData.publicUrl);
+            // Log the URL for debugging
+            console.log('Supabase public URL:', publicUrlData.publicUrl);
+            // Fix any accidental missing 'h' in https
+            let url = publicUrlData.publicUrl;
+            if (url.startsWith('ttps://')) {
+              url = 'h' + url;
+            }
+            exhibit_file_urls.push(url);
             exhibit_file_names.push(file.name);
           }
         }
