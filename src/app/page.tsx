@@ -1,14 +1,13 @@
 'use client';
 
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { JobFormData, jobFormSchema } from '@/lib/schema';
 import { FormInput, FormCheckbox, FormSelect } from '@/components/FormInput';
-import { useEffect, useState, ChangeEvent, useMemo, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { Open_Sans } from 'next/font/google';
 import { supabase } from '@/lib/supabaseClient';
-import { useDropzone } from 'react-dropzone';
 import SuccessModal from '@/components/SuccessModal';
 import ExhibitUpload from '@/components/ExhibitUpload';
 
@@ -35,7 +34,6 @@ export default function Home() {
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
   } = useForm<JobFormData>({
     resolver: zodResolver(jobFormSchema),
     defaultValues: {
@@ -122,14 +120,14 @@ export default function Home() {
       } = data;
 
       // --- Upload exhibit files to Supabase Storage ---
-      let exhibit_file_urls: string[] = [];
-      let exhibit_file_names: string[] = [];
+      const exhibit_file_urls: string[] = [];
+      const exhibit_file_names: string[] = [];
       if (Array.isArray(exhibitFiles) && exhibitFiles.length > 0) {
         for (const file of exhibitFiles) {
           // Type guard: only process if file is a File
           if (!(file instanceof File)) continue;
           const filePath = `${Date.now()}_${file.name}`;
-          const { data: uploadData, error: uploadError } = await supabase.storage
+          const { error: uploadError } = await supabase.storage
             .from('exhibit-uploads')
             .upload(filePath, file, { upsert: false });
           if (uploadError) {
@@ -295,7 +293,7 @@ export default function Home() {
   // Handler to fill form with dummy data
   const handleTestInterface = () => {
     Object.entries(dummyData).forEach(([key, value]) => {
-      setValue(key as keyof JobFormData, value as any, { shouldValidate: true });
+      setValue(key as keyof JobFormData, value as JobFormData[keyof JobFormData], { shouldValidate: true });
     });
   };
 

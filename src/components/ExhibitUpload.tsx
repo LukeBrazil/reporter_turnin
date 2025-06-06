@@ -18,7 +18,7 @@ const ExhibitUpload: React.FC<ExhibitUploadProps> = ({ selectedExhibits, setSele
     setSelectedExhibits(limitedFiles);
     setValue('exhibitFiles', limitedFiles, { shouldValidate: true });
   };
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     accept: { 'application/pdf': ['.pdf'] },
     multiple: true,
@@ -72,10 +72,11 @@ const ExhibitUpload: React.FC<ExhibitUploadProps> = ({ selectedExhibits, setSele
             <h3 className="text-lg font-semibold mb-2">Accepted Files</h3>
             <hr className="mb-4" />
             <div className="flex flex-wrap gap-6">
-              {filePreviews.map((file, idx) => (
+              {filePreviews.map((file) => (
                 <div key={file.name} className="relative flex flex-col items-center w-32">
                   <div className="w-28 h-28 flex items-center justify-center bg-gray-100 border rounded-lg overflow-hidden">
                     {file.isImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={file.previewUrl} alt={file.name} className="object-contain w-full h-full" />
                     ) : file.isPDF ? (
                       <svg className="w-12 h-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
