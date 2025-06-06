@@ -8,10 +8,9 @@ interface ExhibitUploadProps {
   setSelectedExhibits: (files: File[]) => void;
   setValue: UseFormSetValue<JobFormData>;
   errors: FieldErrors<JobFormData>;
-  handleRemoveFile: (fileName: string) => void;
 }
 
-const ExhibitUpload: React.FC<ExhibitUploadProps> = ({ selectedExhibits, setSelectedExhibits, setValue, errors, handleRemoveFile }) => {
+const ExhibitUpload: React.FC<ExhibitUploadProps> = ({ selectedExhibits, setSelectedExhibits, setValue, errors }) => {
   const onDrop = (acceptedFiles: File[]) => {
     const pdfFiles = acceptedFiles.filter(file => file.type === 'application/pdf');
     const combinedFiles = [...selectedExhibits, ...pdfFiles];
@@ -43,6 +42,13 @@ const ExhibitUpload: React.FC<ExhibitUploadProps> = ({ selectedExhibits, setSele
       isPDF,
     };
   }), [selectedExhibits]);
+
+  // Internal handler for removing a file
+  const handleRemoveFile = (fileName: string) => {
+    const updatedFiles = selectedExhibits.filter(file => file.name !== fileName);
+    setSelectedExhibits(updatedFiles);
+    setValue('exhibitFiles', updatedFiles, { shouldValidate: true });
+  };
 
   return (
     <section className="form-section">

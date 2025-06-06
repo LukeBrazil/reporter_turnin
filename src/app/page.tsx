@@ -62,27 +62,6 @@ export default function Home() {
     },
   });
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      const newFiles = Array.from(event.target.files);
-      const pdfFiles = newFiles.filter(file => file.type === 'application/pdf');
-      
-      const combinedFiles = [...selectedExhibits, ...pdfFiles];
-      const limitedFiles = combinedFiles.slice(0, 50);
-
-      setSelectedExhibits(limitedFiles);
-      setValue('exhibitFiles', limitedFiles, { shouldValidate: true });
-      
-      event.target.value = ''; 
-    }
-  };
-
-  const handleRemoveFile = (fileName: string) => {
-    const updatedFiles = selectedExhibits.filter(file => file.name !== fileName);
-    setSelectedExhibits(updatedFiles);
-    setValue('exhibitFiles', updatedFiles, { shouldValidate: true });
-  };
-
   console.log('Form errors:', errors);
 
   // Trap focus in modal and close on Escape
@@ -256,38 +235,6 @@ export default function Home() {
       throw e;
     }
   };
-
-  const onDrop = (acceptedFiles: File[]) => {
-    const pdfFiles = acceptedFiles.filter(file => file.type === 'application/pdf');
-    const combinedFiles = [...selectedExhibits, ...pdfFiles];
-    const limitedFiles = combinedFiles.slice(0, 50);
-    setSelectedExhibits(limitedFiles);
-    setValue('exhibitFiles', limitedFiles, { shouldValidate: true });
-  };
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: { 'application/pdf': ['.pdf'] },
-    multiple: true,
-    maxFiles: 50,
-  });
-
-  // Helper to generate previews for accepted files
-  const filePreviews = useMemo(() => selectedExhibits.slice(0, 10).map(file => {
-    const isImage = file.type.startsWith('image/');
-    const isPDF = file.type === 'application/pdf';
-    let previewUrl = '';
-    if (isImage) {
-      previewUrl = URL.createObjectURL(file);
-    }
-    return {
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      previewUrl,
-      isImage,
-      isPDF,
-    };
-  }), [selectedExhibits]);
 
   // Dummy data for testing
   const dummyData: Partial<JobFormData> = {
@@ -758,13 +705,11 @@ export default function Home() {
 
           {/* Exhibit Upload Section */}
           <section className="form-section">
-           
             <ExhibitUpload
               selectedExhibits={selectedExhibits}
               setSelectedExhibits={setSelectedExhibits}
               setValue={setValue}
               errors={errors}
-              handleRemoveFile={handleRemoveFile}
             />
           </section>
 
@@ -810,7 +755,7 @@ export default function Home() {
             )}
           </div>
         </form>
-      </div>
+    </div>
 
       {/* Success Modal */}
       <SuccessModal open={showSuccessModal} onClose={handleCloseModal} />
