@@ -1,11 +1,13 @@
 import React, { useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { UseFormSetValue, FieldErrors } from 'react-hook-form';
+import { JobFormData } from '@/lib/schema';
 
 interface ExhibitUploadProps {
   selectedExhibits: File[];
   setSelectedExhibits: (files: File[]) => void;
-  setValue: (name: any, value: any, options?: any) => void;
-  errors: any;
+  setValue: UseFormSetValue<JobFormData>;
+  errors: FieldErrors<JobFormData>;
   handleRemoveFile: (fileName: string) => void;
 }
 
